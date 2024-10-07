@@ -1,6 +1,37 @@
+import { useEffect, useState } from "react";
 import { OfficeCard } from "../components/OfficeCard";
+import { Office } from "../types/type";
+import axios from "axios";
 
 export const BrowseOfficeWrapper = () => {
+  const [offices, setOffices] = useState<Office[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    axios("http://127.0.0.1:8000/api/offices", {
+      headers: {
+        "X-API-KEY": "9188hjhsakhs8",
+      },
+    })
+      .then((response) => {
+        setOffices(response.data.data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        setError(error);
+        setLoading(false);
+      });
+  });
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error loading data: {error}</p>;
+  }
+
   return (
     <>
       <section
@@ -13,7 +44,9 @@ export const BrowseOfficeWrapper = () => {
           For Your Better Productivity.
         </h2>
         <div className="grid grid-cols-3 gap-[30px]">
-          <OfficeCard />
+          {offices.map((office) => (
+            <OfficeCard key={office.id} office={office} />
+          ))}
         </div>
       </section>
     </>
