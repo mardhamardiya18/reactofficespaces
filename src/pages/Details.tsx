@@ -1,6 +1,6 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navbar } from "../components/Navbar";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Office } from "../types/type";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -249,17 +249,16 @@ export const Details = () => {
 
               <hr className="border-[#F6F5FD]" />
               <div className="flex flex-col gap-[14px]">
-                <a
-                  href="booking.html"
-                  className="flex items-center justify-center w-full rounded-full p-[16px_26px] gap-3 bg-[#0D903A] font-bold text-[#F7F7FD]"
-                >
-                  <img
-                    src="/assets/images/icons/slider-horizontal-white.svg"
-                    className="w-6 h-6"
-                    alt="icon"
-                  />
-                  <span>Book This Office</span>
-                </a>
+                <Link to={`/office/${office?.slug}/book`}>
+                  <div className="flex items-center justify-center w-full rounded-full p-[16px_26px] gap-3 bg-[#0D903A] font-bold text-[#F7F7FD]">
+                    <img
+                      src="/assets/images/icons/slider-horizontal-white.svg"
+                      className="w-6 h-6"
+                      alt="icon"
+                    />
+                    <span>Book This Office</span>
+                  </div>
+                </Link>
                 <button className="flex items-center justify-center w-full rounded-full border border-[#000929] p-[16px_26px] gap-3 bg-white font-semibold">
                   <img
                     src="/assets/images/icons/save-add.svg"
