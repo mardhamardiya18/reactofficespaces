@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { z } from "zod";
 import axios from "axios";
 import { Office } from "../types/type";
 import { useNavigate, useParams } from "react-router-dom";
+import { bookingSchema } from "../types/validationBooking";
 
 export const BookOffice = () => {
+  const baseURL = "http://127.0.0.1:8000/storage";
+
   const { slug } = useParams<{ slug: string }>();
   const [office, setOffice] = useState<Office | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +84,63 @@ export const BookOffice = () => {
     return <p>Data not found</p>;
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    console.log("Validating form data...");
+    const validation = bookingSchema.safeParse(formData);
+
+    if (!validation.success) {
+      console.log("Validation errors:", validation.error.issues);
+      setFormErrors(validation.error.issues);
+      return;
+    }
+
+    console.log("Form data is valid. Submitting...", formData);
+
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/api/booking-transaction`,
+        {
+          ...formData,
+        },
+        {
+          headers: {
+            "X-API-KEY": "9188hjhsakhs8",
+          },
+        }
+      );
+
+      console.log("Form submitted successfully:", response.data);
+
+      navigate("/success-booking", {
+        state: {
+          office,
+          booking: response.data,
+        },
+      });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.log("Error fetching office data:", error.message);
+        setError(error.message);
+      } else {
+        console.log("Unexpected error:", error);
+        setError("An unexpected error onccured");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -93,7 +153,7 @@ export const BookOffice = () => {
         </h1>
         <div className="absolute w-full h-full bg-[linear-gradient(180deg,_rgba(0,0,0,0)_0%,#000000_91.83%)] z-10" />
         <img
-          src="/assets/images/thumbnails/thumbnail-details-4.png"
+          src={`${baseURL}/${office.thumbnail}`}
           className="absolute w-full h-full object-cover object-top"
           alt=""
         />
@@ -106,22 +166,20 @@ export const BookOffice = () => {
           <div className="flex items-center gap-4">
             <div className="flex shrink-0 w-[140px] h-[100px] rounded-[20px] overflow-hidden">
               <img
-                src="/assets/images/thumbnails/thumbnail-details-4.png"
+                src={`${baseURL}/${office.thumbnail}`}
                 className="w-full h-full object-cover"
                 alt="thumbnail"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <p className="font-bold text-xl leading-[30px]">
-                Angga Park Central <br /> Master Capitalize
-              </p>
+              <p className="font-bold text-xl leading-[30px]">{office.name}</p>
               <div className="flex items-center gap-[6px]">
                 <img
                   src="/assets/images/icons/location.svg"
                   className="w-6 h-6"
                   alt="icon"
                 />
-                <p className="font-semibold">Jakarta Pusat</p>
+                <p className="font-semibold">{office.city.name}</p>
               </div>
             </div>
           </div>
@@ -140,11 +198,16 @@ export const BookOffice = () => {
                 />
                 <input
                   type="text"
+                  onChange={handleChange}
                   name="name"
                   id="name"
+                  value={formData.name}
                   className="appearance-none outline-none w-full py-3 font-semibold placeholder:font-normal placeholder:text-[#000929]"
                   placeholder="Write your complete name"
                 />
+                {formErrors.find((error) => error.path.includes("name")) && (
+                  <p className="text-red-500">Name is required</p>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -159,11 +222,16 @@ export const BookOffice = () => {
                 />
                 <input
                   type="tel"
-                  name="phone"
-                  id="phone"
+                  name="phone_number"
+                  id="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
                   className="appearance-none outline-none w-full py-3 font-semibold placeholder:font-normal placeholder:text-[#000929]"
                   placeholder="Write your valid number"
                 />
+                {formErrors.find((error) =>
+                  error.path.includes("phone_number")
+                ) && <p className="text-red-500">Phone Number is required</p>}
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -178,10 +246,16 @@ export const BookOffice = () => {
                 />
                 <input
                   type="date"
-                  name="date"
-                  id="date"
+                  name="started_at"
+                  value={formData.started_at}
+                  id="started_at"
+                  onChange={handleChange}
                   className="relative appearance-none outline-none w-full py-3 font-semibold [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0"
                 />
+
+                {formErrors.find((error) =>
+                  error.path.includes("Started_at")
+                ) && <p className="text-red-500">Date at is required</p>}
               </div>
             </div>
           </div>
@@ -233,20 +307,26 @@ export const BookOffice = () => {
           <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <p className="font-semibold">Duration</p>
-              <p className="font-bold">20 Days Working</p>
+              <p className="font-bold">{office.duration} Days Working</p>
             </div>
             <div className="flex items-center justify-between">
               <p className="font-semibold">Sub Total</p>
-              <p className="font-bold">Rp 250.000</p>
+              <p className="font-bold">
+                Rp {office.price.toLocaleString("id")}
+              </p>
             </div>
             <div className="flex items-center justify-between">
               <p className="font-semibold">Unique Code</p>
-              <p className="font-bold text-[#FF2D2D]">-Rp 340</p>
+              <p className="font-bold text-[#FF2D2D]">-Rp {uniqueCode}</p>
             </div>
             <div className="flex items-center justify-between">
               <p className="font-semibold">Grand Total</p>
               <p className="font-bold text-[22px] leading-[33px] text-[#0D903A]">
-                Rp 249.660
+                Rp{" "}
+                {totalAmountWithUniqueCode.toLocaleString("id", {
+                  maximumFractionDigits: 0,
+                  minimumFractionDigits: 0,
+                })}
               </p>
             </div>
             <div className="relative rounded-xl p-[10px_20px] gap-[10px] bg-[#000929] text-white">
@@ -307,10 +387,12 @@ export const BookOffice = () => {
           </div>
           <hr className="border-[#F6F5FD]" />
           <button
+            onChange={handleSubmit}
             type="submit"
+            disabled={isLoading}
             className="flex items-center justify-center w-full rounded-full p-[16px_26px] gap-3 bg-[#0D903A] font-bold text-[#F7F7FD]"
           >
-            <span>I’ve Made The Payment</span>
+            <span>{isLoading ? "Loading..." : "I've Already paid"}</span>
           </button>
         </div>
       </form>
