@@ -37,7 +37,7 @@ export interface BookingDetails {
     name: string,
     phone_number: string,
     booking_trx_id: string,
-    id_paid: boolean,
+    is_paid: boolean,
     duration: number,
     total_amount: number,
     started_at: string,
