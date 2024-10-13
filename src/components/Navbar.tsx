@@ -9,7 +9,7 @@ export const Navbar = () => {
         </Link>
         <ul className="flex items-center gap-[50px] w-fit">
           <li>
-            <a href="">Browse</a>
+            <Link to={"/"}>Browse</Link>
           </li>
           <li>
             <a href="">Popular</a>
